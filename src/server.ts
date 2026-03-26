@@ -1,10 +1,34 @@
-import express from 'express';
+import app from './app';
+import { env } from './config/env';
+import { logger } from './config/logger';
+import { prisma } from './config/db';
+import { redis } from './config/redis';
 
-const app = express();
-const PORT = 5000;
-app.get('/', (req, res) => {
-  res.send('Cloudmart backend server is running!!!');
+const startServer = async () => {
+  try {
+    await prisma.$connect();
+    await redis.ping();
+    app.listen(env.PORT, () => {
+      logger.info(`Server running on http://localhost:${env.PORT}`);
+    });
+  } catch (error) {
+    logger.error(error, 'Failed to start the server');
+    process.exit(1);
+  }
+};
+
+startServer();
+
+process.on('SIGNIT', async () => {
+  logger.info('shutting down server....');
+  await prisma.$disconnect();
+  redis.disconnect();
+  process.exit(0);
 });
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+
+process.on('SIGTERM', async () => {
+  logger.info('shutting down the server...');
+  await prisma.$disconnect();
+  redis.disconnect();
+  process.exit(0);
 });
