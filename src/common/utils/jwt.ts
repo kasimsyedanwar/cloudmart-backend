@@ -11,3 +11,11 @@ export const createToken = (
 export const verifyToken = <T>(token: string, secret: Secret) => {
   return jwt.verify(token, secret) as T;
 };
+
+export const createAccessToken = (payload: object, secret: Secret) => {
+  return createToken(payload, secret, '15m');
+};
+
+export const createRefreshToken = (payload: object, secret: Secret) => {
+  return createToken(payload, secret, '7d');
+};

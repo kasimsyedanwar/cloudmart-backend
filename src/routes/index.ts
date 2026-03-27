@@ -4,6 +4,7 @@ import { redis } from '../config/redis';
 import { sendResponse } from '../common/utils/sendResponse';
 import { AuthRoutes } from '../modules/auth/auth.routes';
 import { TestRoutes } from './test.routes';
+import { ProductRoutes } from '../modules/product/product.routes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.get('/ready', async (_req, res, next) => {
   }
 });
 router.use('/auth', AuthRoutes);
+router.use('/products', ProductRoutes);
 router.use('/test', TestRoutes);
 export default router;

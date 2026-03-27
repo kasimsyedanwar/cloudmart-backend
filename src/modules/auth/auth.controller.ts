@@ -22,9 +22,27 @@ const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  const result = await AuthService.refreshAccessToken(refreshToken);
+  return sendResponse(res, 200, {
+    success: true,
+    message: 'Access token refreshed successfully',
+    data: result,
+  });
+});
+
+const logout = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  await AuthService.logoutUser(refreshToken);
+  return sendResponse(res, 200, {
+    success: true,
+    message: 'logout successfully',
+  });
+});
+
 const getMe = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user!.userId;
-
   const result = await AuthService.getMe(userId);
 
   return sendResponse(res, 200, {
@@ -34,4 +52,4 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const AuthController = { register, login, getMe };
+export const AuthController = { register, login, refreshToken, logout, getMe };

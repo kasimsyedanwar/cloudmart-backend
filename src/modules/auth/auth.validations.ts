@@ -17,3 +17,15 @@ export const loginValidationSchema = z.object({
     password: z.string().min(1, 'Password is required'),
   }),
 });
+
+export const refreshTokenValidationSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().min(1, 'Refresh token is expired'),
+  }),
+});
+
+export const logoutValidationSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().min(1, 'Refresh token is expired'),
+  }),
+});

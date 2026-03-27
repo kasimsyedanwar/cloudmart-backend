@@ -4,9 +4,9 @@ import { NextFunction, Request, Response } from 'express';
 export const validateRequest = (schema: ZodType) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse({
-      body: req.body,
-      params: req.params,
-      query: req.query,
+      body: req.body ?? {},
+      params: req.params ?? {},
+      query: req.query ?? {},
     });
 
     if (!result.success) {
