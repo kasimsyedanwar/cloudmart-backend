@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { prisma } from '../config/db';
 import { redis } from '../config/redis';
 import { sendResponse } from '../common/utils/sendResponse';
-import { timeStamp } from 'node:console';
+import { AuthRoutes } from '../modules/auth/auth.routes';
+import { TestRoutes } from './test.routes';
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.get('/ready', async (_req, res, next) => {
     next(error);
   }
 });
-
+router.use('/auth', AuthRoutes);
+router.use('/test', TestRoutes);
 export default router;
