@@ -3,6 +3,7 @@ import { prisma } from '../config/db';
 import { redis } from '../config/redis';
 import { sendResponse } from '../common/utils/sendResponse';
 import { AuthRoutes } from '../modules/auth/auth.routes';
+import { OrderRoutes } from '../modules/order/order.routes';
 import { TestRoutes } from './test.routes';
 import { ProductRoutes } from '../modules/product/product.routes';
 
@@ -38,5 +39,6 @@ router.get('/ready', async (_req, res, next) => {
 });
 router.use('/auth', AuthRoutes);
 router.use('/products', ProductRoutes);
+router.use('/orders', OrderRoutes);
 router.use('/test', TestRoutes);
 export default router;
