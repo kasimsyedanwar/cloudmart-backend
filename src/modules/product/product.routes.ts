@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ProductController } from './product.controller';
 import {
   createProductValidationSchema,
+  getAllProductValidationSchema,
   productIdParamValidationSchema,
   updateProductValidationSchema,
 } from './product.validation';
@@ -10,7 +11,11 @@ import { auth } from '../../middlewares/auth.middleware';
 
 const router = Router();
 
-router.get('/', ProductController.getAllProducts);
+router.get(
+  '/',
+  validateRequest(getAllProductValidationSchema),
+  ProductController.getAllProducts,
+);
 
 router.get(
   '/:id',

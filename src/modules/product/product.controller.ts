@@ -15,13 +15,28 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllProducts = catchAsync(async (_req: Request, res: Response) => {
-  const result = await ProductService.getAllProducts();
+const getAllProducts = catchAsync(async (req: Request, res: Response) => {
+  const query = {
+    page: req.query.page ? Number(req.query.page) : undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    search: req.query.search ? String(req.query.search) : undefined,
+    minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
+    maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+    sortBy: req.query.sortBy
+      ? (String(req.query.sortBy) as 'createdAt' | 'price' | 'title')
+      : undefined,
+    sortOrder: req.query.sortOrder
+      ? (String(req.query.sortOrder) as 'asc' | 'desc')
+      : undefined,
+  };
+
+  const result = await ProductService.getAllProducts(query);
 
   return sendResponse(res, 200, {
     success: true,
     message: 'Products retrieved successfully',
-    data: result,
+    data: result.data,
+    meta: result.meta,
   });
 });
 
