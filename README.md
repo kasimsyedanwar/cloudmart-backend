@@ -103,3 +103,15 @@ CloudMart now includes a production-style PostgreSQL schema using Prisma ORM.
 ```bash
 npx prisma migrate dev --name init_advanced_schema
 ```
+
+## Phase 5: Seed and Scripts
+
+CloudMart now includes repeatable local seed data and database helper scripts.
+
+### Seed Users
+
+```txt
+Admin    -> admin@cloudmart.com / Password@123
+Vendor   -> vendor@cloudmart.com / Password@123
+Customer -> customer@cloudmart.com / Password@123
+```
