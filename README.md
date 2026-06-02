@@ -50,3 +50,13 @@ PORT=5000
 CORS_ORIGIN=*
 LOG_LEVEL=info
 ```
+
+## Phase 3: Local Infra + Prisma Init
+
+CloudMart now includes local infrastructure for PostgreSQL and Redis using Docker Compose.
+
+### Start Infrastructure
+
+```bash
+npm run infra:up
+```

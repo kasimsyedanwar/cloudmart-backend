@@ -9,6 +9,25 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
+
+  DATABASE_URL: z
+    .string()
+    .min(1, 'DATABASE_URL is required')
+    .refine(
+      (value) =>
+        value.startsWith('postgresql://') || value.startsWith('postgres://'),
+      {
+        message:
+          'DATABASE_URL must be valid PostgreSQL connection string starting with postgresql:// or postgres://',
+      },
+    ),
+  REDIS_URL: z
+    .string()
+    .min(1, 'Redis URL is required')
+    .refine((value) => value.startsWith('redis://'), {
+      message:
+        'REDIS_URL must be valid Redis connection string starting with redis://',
+    }),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
