@@ -6,3 +6,411 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum UserRole {
+  ADMIN
+  VENDOR
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+}
+
+enum VendorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  OUT_OF_STOCK
+  ARCHIVED
+}
+
+enum InventoryMovementType {
+  STOCK_IN
+  STOCK_OUT
+  ORDER_RESERVED
+  ORDER_DEDUCTED
+  ORDER_CANCELLED_ADJUSTMENT
+  MANUAL_ADJUSTMENT
+}
+
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+  ABANDONED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  MOCK
+  STRIPE
+  RAZORPAY
+}
+
+enum PaymentEventType {
+  CREATED
+  SUCCESS
+  FAILED
+  REFUNDED
+  WEBHOOK_RECEIVED
+}
+
+enum DashboardScope {
+  ADMIN
+  VENDOR
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String     @db.VarChar(120)
+  email        String     @unique @db.VarChar(255)
+  passwordHash String
+  role         UserRole   @default(CUSTOMER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  refreshTokens      RefreshToken[]
+  addresses          Address[]
+  vendorProfile      VendorProfile?
+  products           Product[]           @relation("VendorProducts")
+  carts              Cart[]
+  orders             Order[]             @relation("CustomerOrders")
+  orderItemsAsVendor OrderItem[]         @relation("VendorOrderItems")
+  inventoryMovements InventoryMovement[] @relation("InventoryActor")
+  auditLogs          AuditLog[]          @relation("AuditActor")
+  reviews            Review[]
+
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Address {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String      @db.Uuid
+  type       AddressType @default(SHIPPING)
+  fullName   String?     @db.VarChar(120)
+  phone      String?     @db.VarChar(30)
+  line1      String      @db.VarChar(255)
+  line2      String?     @db.VarChar(255)
+  city       String      @db.VarChar(100)
+  state      String      @db.VarChar(100)
+  postalCode String      @db.VarChar(20)
+  country    String      @default("India") @db.VarChar(100)
+  isDefault  Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([city, state])
+}
+
+model VendorProfile {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @unique @db.Uuid
+  storeName   String       @db.VarChar(150)
+  slug        String       @unique @db.VarChar(180)
+  description String?
+  status      VendorStatus @default(PENDING)
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(120)
+  slug      String   @unique @db.VarChar(150)
+  parentId  String?  @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([parentId])
+}
+
+model Product {
+  id                String        @id @default(uuid()) @db.Uuid
+  vendorId          String        @db.Uuid
+  categoryId        String?       @db.Uuid
+  title             String        @db.VarChar(200)
+  slug              String        @db.VarChar(220)
+  description       String?
+  price             Decimal       @db.Decimal(12, 2)
+  stock             Int           @default(0)
+  lowStockThreshold Int           @default(5)
+  status            ProductStatus @default(DRAFT)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  vendor             User                @relation("VendorProducts", fields: [vendorId], references: [id], onDelete: Restrict)
+  category           Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images             ProductImage[]
+  inventoryMovements InventoryMovement[]
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+  reviews            Review[]
+
+  @@unique([vendorId, slug])
+  @@index([vendorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([price])
+  @@index([createdAt])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid
+  url       String
+  altText   String?  @db.VarChar(200)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, sortOrder])
+  @@index([productId])
+}
+
+model InventoryMovement {
+  id          String                @id @default(uuid()) @db.Uuid
+  productId   String                @db.Uuid
+  type        InventoryMovementType
+  quantity    Int
+  reason      String?               @db.VarChar(255)
+  orderId     String?               @db.Uuid
+  actorId     String?               @db.Uuid
+  stockBefore Int
+  stockAfter  Int
+  createdAt   DateTime              @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  actor   User?   @relation("InventoryActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([orderId])
+  @@index([actorId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Cart {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @db.Uuid
+  status    CartStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+model CartItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  cartId        String   @db.Uuid
+  productId     String   @db.Uuid
+  quantity      Int
+  priceSnapshot Decimal  @db.Decimal(12, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productId])
+  @@index([productId])
+}
+
+model Order {
+  id                      String        @id @default(uuid()) @db.Uuid
+  orderNumber             String        @unique @db.VarChar(40)
+  customerId              String        @db.Uuid
+  status                  OrderStatus   @default(PENDING_PAYMENT)
+  subtotal                Decimal       @db.Decimal(12, 2)
+  tax                     Decimal       @default(0.00) @db.Decimal(12, 2)
+  shippingFee             Decimal       @default(0.00) @db.Decimal(12, 2)
+  total                   Decimal       @db.Decimal(12, 2)
+  paymentStatus           PaymentStatus @default(PENDING)
+  shippingAddressSnapshot Json?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  customer           User                @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  items              OrderItem[]
+  payment            Payment?
+  inventoryMovements InventoryMovement[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @db.Uuid
+  productId     String   @db.Uuid
+  vendorId      String   @db.Uuid
+  quantity      Int
+  priceSnapshot Decimal  @db.Decimal(12, 2)
+  lineTotal     Decimal  @db.Decimal(12, 2)
+  createdAt     DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  vendor  User    @relation("VendorOrderItems", fields: [vendorId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([vendorId])
+}
+
+model Payment {
+  id          String          @id @default(uuid()) @db.Uuid
+  orderId     String          @unique @db.Uuid
+  provider    PaymentProvider @default(MOCK)
+  amount      Decimal         @db.Decimal(12, 2)
+  currency    String          @default("INR") @db.Char(3)
+  status      PaymentStatus   @default(PENDING)
+  providerRef String?         @unique @db.VarChar(120)
+  paidAt      DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  order  Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  events PaymentEvent[]
+
+  @@index([status])
+  @@index([provider])
+  @@index([createdAt])
+}
+
+model PaymentEvent {
+  id         String           @id @default(uuid()) @db.Uuid
+  paymentId  String           @db.Uuid
+  eventType  PaymentEventType
+  rawPayload Json?
+  createdAt  DateTime         @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model DashboardSnapshot {
+  id          String         @id @default(uuid()) @db.Uuid
+  scope       DashboardScope
+  scopeId     String?        @db.Uuid
+  date        DateTime       @db.Date
+  metricsJson Json
+  createdAt   DateTime       @default(now())
+
+  @@index([scope])
+  @@index([scopeId])
+  @@index([date])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @db.Uuid
+  action       String   @db.VarChar(120)
+  entityType   String   @db.VarChar(80)
+  entityId     String?  @db.VarChar(120)
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model Review {
+  id        String       @id @default(uuid()) @db.Uuid
+  productId String       @db.Uuid
+  userId    String       @db.Uuid
+  rating    Int
+  comment   String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}

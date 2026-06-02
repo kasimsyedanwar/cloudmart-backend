@@ -60,3 +60,46 @@ CloudMart now includes local infrastructure for PostgreSQL and Redis using Docke
 ```bash
 npm run infra:up
 ```
+
+## Phase 4: Advanced Prisma Schema
+
+CloudMart now includes a production-style PostgreSQL schema using Prisma ORM.
+
+### Core Models
+
+- User
+- RefreshToken
+- Address
+- VendorProfile
+- Category
+- Product
+- ProductImage
+- InventoryMovement
+- Cart
+- CartItem
+- Order
+- OrderItem
+- Payment
+- PaymentEvent
+- DashboardSnapshot
+- AuditLog
+- Review
+
+### Core Enums
+
+- UserRole
+- UserStatus
+- VendorStatus
+- ProductStatus
+- CartStatus
+- OrderStatus
+- PaymentStatus
+- InventoryMovementType
+- DashboardScope
+- ReviewStatus
+
+### Migration Command
+
+```bash
+npx prisma migrate dev --name init_advanced_schema
+```
