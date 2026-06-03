@@ -244,3 +244,14 @@ GET  /api/v1/payments/:id
 POST /api/v1/payments/:id/mock-success
 POST /api/v1/payments/:id/mock-failure
 ```
+
+## Phase 17: Order Views + Status
+
+CloudMart now supports role-based order views and admin order status management.
+
+### Customer Order Endpoints
+
+```txt
+GET /api/v1/orders/my
+GET /api/v1/orders/my/:id
+```

@@ -60,12 +60,23 @@ const orderInclude = {
     },
   },
   items: {
+    orderBy: {
+      createdAt: 'asc',
+    },
     include: {
       product: {
         select: {
           id: true,
           title: true,
           slug: true,
+          stock: true,
+          status: true,
+          images: {
+            orderBy: {
+              sortOrder: 'asc',
+            },
+            take: 1,
+          },
         },
       },
       vendor: {
@@ -172,10 +183,10 @@ export const orderRepository = {
     tx: PrismaTransactionClient;
   }): Promise<void> => {
     await tx.$queryRaw`
-    SELECT id FROM public."Product"
-    WHERE id = CAST(${productId} AS uuid)
-    FOR UPDATE
-  `;
+      SELECT id FROM public."Product"
+      WHERE id = CAST(${productId} AS uuid)
+      FOR UPDATE
+    `;
   },
 
   findProductByIdForCheckout: async ({
@@ -355,6 +366,62 @@ export const orderRepository = {
       data: {
         status: CartStatus.CHECKED_OUT,
       },
+    });
+  },
+
+  listOrders: async ({
+    where,
+    skip,
+    take,
+  }: {
+    where: Prisma.OrderWhereInput;
+    skip: number;
+    take: number;
+  }): Promise<OrderWithRelations[]> => {
+    return prisma.order.findMany({
+      where,
+      include: orderInclude,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take,
+    });
+  },
+
+  countOrders: async (where: Prisma.OrderWhereInput): Promise<number> => {
+    return prisma.order.count({
+      where,
+    });
+  },
+
+  findOrderById: async (id: string): Promise<OrderWithRelations | null> => {
+    return prisma.order.findUnique({
+      where: {
+        id,
+      },
+      include: orderInclude,
+    });
+  },
+
+  updateOrderStatus: async ({
+    orderId,
+    status,
+    paymentStatus,
+  }: {
+    orderId: string;
+    status: OrderStatus;
+    paymentStatus?: PaymentStatus;
+  }): Promise<OrderWithRelations> => {
+    return prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status,
+        paymentStatus,
+      },
+      include: orderInclude,
     });
   },
 };

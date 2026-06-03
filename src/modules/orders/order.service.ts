@@ -10,54 +10,78 @@ import {
 import prisma from '../../config/prisma';
 import { AppError } from '../../common/errors/app-error';
 import { ErrorCodes } from '../../common/errors/error-codes';
-import { CheckoutInput } from './order.validation';
+import {
+  buildPaginationMeta,
+  getPagination,
+} from '../../common/utils/pagination';
+import {
+  CheckoutInput,
+  ListAdminOrdersQuery,
+  ListMyOrdersQuery,
+  ListVendorOrdersQuery,
+  UpdateOrderStatusInput,
+} from './order.validation';
 import {
   CheckoutOrderItemInput,
   orderRepository,
   OrderWithRelations,
 } from './order.repository';
 
-type CheckoutResponse = {
-  order: {
+type OrderResponse = {
+  id: string;
+  orderNumber: string;
+  customerId: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  subtotal: string;
+  tax: string;
+  shippingFee: string;
+  total: string;
+  shippingAddressSnapshot: Prisma.JsonValue | null;
+  customer: {
     id: string;
-    orderNumber: string;
-    customerId: string;
-    status: OrderStatus;
-    paymentStatus: PaymentStatus;
-    subtotal: string;
-    tax: string;
-    shippingFee: string;
-    total: string;
-    shippingAddressSnapshot: Prisma.JsonValue | null;
-    items: {
-      id: string;
-      productId: string;
-      vendorId: string;
-      quantity: number;
-      priceSnapshot: string;
-      lineTotal: string;
-      product: {
-        id: string;
-        title: string;
-        slug: string;
-      };
-      vendor: {
-        id: string;
-        name: string;
-        email: string;
-        storeName: string | null;
-        storeSlug: string | null;
-      };
-    }[];
-    payment: {
-      id: string;
-      provider: string;
-      amount: string;
-      currency: string;
-      status: PaymentStatus;
-    } | null;
-    createdAt: Date;
+    name: string;
+    email: string;
+    role: string;
   };
+  items: {
+    id: string;
+    productId: string;
+    vendorId: string;
+    quantity: number;
+    priceSnapshot: string;
+    lineTotal: string;
+    product: {
+      id: string;
+      title: string;
+      slug: string;
+      stock: number;
+      status: ProductStatus;
+      imageUrl: string | null;
+    };
+    vendor: {
+      id: string;
+      name: string;
+      email: string;
+      storeName: string | null;
+      storeSlug: string | null;
+    };
+  }[];
+  payment: {
+    id: string;
+    provider: string;
+    amount: string;
+    currency: string;
+    status: PaymentStatus;
+    providerRef: string | null;
+    paidAt: Date | null;
+  } | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CheckoutResponse = {
+  order: OrderResponse;
 };
 
 type StockDeductionPlan = {
@@ -144,51 +168,188 @@ const assertProductCanCheckout = ({
   return product;
 };
 
-const toCheckoutResponse = (order: OrderWithRelations): CheckoutResponse => {
+const toOrderResponse = (order: OrderWithRelations): OrderResponse => {
   return {
-    order: {
-      id: order.id,
-      orderNumber: order.orderNumber,
-      customerId: order.customerId,
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-      subtotal: decimalToString(order.subtotal),
-      tax: decimalToString(order.tax),
-      shippingFee: decimalToString(order.shippingFee),
-      total: decimalToString(order.total),
-      shippingAddressSnapshot: order.shippingAddressSnapshot,
-      items: order.items.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        vendorId: item.vendorId,
-        quantity: item.quantity,
-        priceSnapshot: decimalToString(item.priceSnapshot),
-        lineTotal: decimalToString(item.lineTotal),
-        product: {
-          id: item.product.id,
-          title: item.product.title,
-          slug: item.product.slug,
-        },
-        vendor: {
-          id: item.vendor.id,
-          name: item.vendor.name,
-          email: item.vendor.email,
-          storeName: item.vendor.vendorProfile?.storeName ?? null,
-          storeSlug: item.vendor.vendorProfile?.slug ?? null,
-        },
-      })),
-      payment: order.payment
-        ? {
-            id: order.payment.id,
-            provider: order.payment.provider,
-            amount: decimalToString(order.payment.amount),
-            currency: order.payment.currency,
-            status: order.payment.status,
-          }
-        : null,
-      createdAt: order.createdAt,
+    id: order.id,
+    orderNumber: order.orderNumber,
+    customerId: order.customerId,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    subtotal: decimalToString(order.subtotal),
+    tax: decimalToString(order.tax),
+    shippingFee: decimalToString(order.shippingFee),
+    total: decimalToString(order.total),
+    shippingAddressSnapshot: order.shippingAddressSnapshot,
+    customer: {
+      id: order.customer.id,
+      name: order.customer.name,
+      email: order.customer.email,
+      role: order.customer.role,
     },
+    items: order.items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      vendorId: item.vendorId,
+      quantity: item.quantity,
+      priceSnapshot: decimalToString(item.priceSnapshot),
+      lineTotal: decimalToString(item.lineTotal),
+      product: {
+        id: item.product.id,
+        title: item.product.title,
+        slug: item.product.slug,
+        stock: item.product.stock,
+        status: item.product.status,
+        imageUrl: item.product.images[0]?.url ?? null,
+      },
+      vendor: {
+        id: item.vendor.id,
+        name: item.vendor.name,
+        email: item.vendor.email,
+        storeName: item.vendor.vendorProfile?.storeName ?? null,
+        storeSlug: item.vendor.vendorProfile?.slug ?? null,
+      },
+    })),
+    payment: order.payment
+      ? {
+          id: order.payment.id,
+          provider: order.payment.provider,
+          amount: decimalToString(order.payment.amount),
+          currency: order.payment.currency,
+          status: order.payment.status,
+          providerRef: order.payment.providerRef,
+          paidAt: order.payment.paidAt,
+        }
+      : null,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
   };
+};
+
+const assertCustomerCanViewOrder = ({
+  order,
+  userId,
+}: {
+  order: OrderWithRelations | null;
+  userId: string;
+}): OrderWithRelations => {
+  if (!order || order.customerId !== userId) {
+    throw new AppError({
+      message: 'Order not found',
+      statusCode: 404,
+      code: ErrorCodes.NOT_FOUND,
+    });
+  }
+
+  return order;
+};
+
+const assertVendorCanViewOrder = ({
+  order,
+  vendorId,
+}: {
+  order: OrderWithRelations | null;
+  vendorId: string;
+}): OrderWithRelations => {
+  if (!order || !order.items.some((item) => item.vendorId === vendorId)) {
+    throw new AppError({
+      message: 'Order not found',
+      statusCode: 404,
+      code: ErrorCodes.NOT_FOUND,
+    });
+  }
+
+  return {
+    ...order,
+    items: order.items.filter((item) => item.vendorId === vendorId),
+  };
+};
+
+const buildAdminSearchWhere = (
+  search?: string,
+): Prisma.OrderWhereInput | undefined => {
+  if (!search) {
+    return undefined;
+  }
+
+  return {
+    OR: [
+      {
+        orderNumber: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+      {
+        customer: {
+          email: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      },
+      {
+        customer: {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      },
+    ],
+  };
+};
+
+const validateAdminStatusTransition = ({
+  currentStatus,
+  nextStatus,
+}: {
+  currentStatus: OrderStatus;
+  nextStatus: OrderStatus;
+}): void => {
+  if (currentStatus === OrderStatus.CANCELLED) {
+    throw new AppError({
+      message: 'Cancelled order status cannot be changed',
+      statusCode: 400,
+      code: ErrorCodes.BAD_REQUEST,
+    });
+  }
+
+  if (currentStatus === OrderStatus.REFUNDED) {
+    throw new AppError({
+      message: 'Refunded order status cannot be changed',
+      statusCode: 400,
+      code: ErrorCodes.BAD_REQUEST,
+    });
+  }
+
+  if (
+    nextStatus !== OrderStatus.CANCELLED &&
+    currentStatus === OrderStatus.PENDING_PAYMENT
+  ) {
+    throw new AppError({
+      message: 'Pending payment order cannot move to fulfillment status',
+      statusCode: 400,
+      code: ErrorCodes.BAD_REQUEST,
+    });
+  }
+};
+
+const getPaymentStatusForOrderStatus = ({
+  currentPaymentStatus,
+  nextOrderStatus,
+}: {
+  currentPaymentStatus: PaymentStatus;
+  nextOrderStatus: OrderStatus;
+}): PaymentStatus | undefined => {
+  if (nextOrderStatus === OrderStatus.REFUNDED) {
+    return PaymentStatus.REFUNDED;
+  }
+
+  if (nextOrderStatus === OrderStatus.CANCELLED) {
+    return currentPaymentStatus;
+  }
+
+  return undefined;
 };
 
 export const orderService = {
@@ -334,6 +495,213 @@ export const orderService = {
       },
     );
 
-    return toCheckoutResponse(order);
+    return {
+      order: toOrderResponse(order),
+    };
+  },
+
+  listMyOrders: async ({
+    userId,
+    query,
+  }: {
+    userId: string;
+    query: ListMyOrdersQuery;
+  }) => {
+    const { page, limit, skip, take } = getPagination({
+      page: query.page,
+      limit: query.limit,
+    });
+
+    const where: Prisma.OrderWhereInput = {
+      customerId: userId,
+      status: query.status,
+      paymentStatus: query.paymentStatus,
+    };
+
+    const [orders, total] = await Promise.all([
+      orderRepository.listOrders({
+        where,
+        skip,
+        take,
+      }),
+      orderRepository.countOrders(where),
+    ]);
+
+    return {
+      orders: orders.map(toOrderResponse),
+      pagination: buildPaginationMeta({
+        page,
+        limit,
+        total,
+      }),
+    };
+  },
+
+  getMyOrderById: async ({
+    userId,
+    orderId,
+  }: {
+    userId: string;
+    orderId: string;
+  }): Promise<OrderResponse> => {
+    const order = await orderRepository.findOrderById(orderId);
+
+    const ownedOrder = assertCustomerCanViewOrder({
+      order,
+      userId,
+    });
+
+    return toOrderResponse(ownedOrder);
+  },
+
+  listVendorOrders: async ({
+    vendorId,
+    query,
+  }: {
+    vendorId: string;
+    query: ListVendorOrdersQuery;
+  }) => {
+    const { page, limit, skip, take } = getPagination({
+      page: query.page,
+      limit: query.limit,
+    });
+
+    const where: Prisma.OrderWhereInput = {
+      status: query.status,
+      items: {
+        some: {
+          vendorId,
+        },
+      },
+    };
+
+    const [orders, total] = await Promise.all([
+      orderRepository.listOrders({
+        where,
+        skip,
+        take,
+      }),
+      orderRepository.countOrders(where),
+    ]);
+
+    return {
+      orders: orders.map((order) =>
+        toOrderResponse({
+          ...order,
+          items: order.items.filter((item) => item.vendorId === vendorId),
+        }),
+      ),
+      pagination: buildPaginationMeta({
+        page,
+        limit,
+        total,
+      }),
+    };
+  },
+
+  getVendorOrderById: async ({
+    vendorId,
+    orderId,
+  }: {
+    vendorId: string;
+    orderId: string;
+  }): Promise<OrderResponse> => {
+    const order = await orderRepository.findOrderById(orderId);
+
+    const vendorOrder = assertVendorCanViewOrder({
+      order,
+      vendorId,
+    });
+
+    return toOrderResponse(vendorOrder);
+  },
+
+  listOrdersForAdmin: async (query: ListAdminOrdersQuery) => {
+    const { page, limit, skip, take } = getPagination({
+      page: query.page,
+      limit: query.limit,
+    });
+
+    const where: Prisma.OrderWhereInput = {
+      status: query.status,
+      paymentStatus: query.paymentStatus,
+      customerId: query.customerId,
+      items: query.vendorId
+        ? {
+            some: {
+              vendorId: query.vendorId,
+            },
+          }
+        : undefined,
+      ...buildAdminSearchWhere(query.search),
+    };
+
+    const [orders, total] = await Promise.all([
+      orderRepository.listOrders({
+        where,
+        skip,
+        take,
+      }),
+      orderRepository.countOrders(where),
+    ]);
+
+    return {
+      orders: orders.map(toOrderResponse),
+      pagination: buildPaginationMeta({
+        page,
+        limit,
+        total,
+      }),
+    };
+  },
+
+  getOrderByIdForAdmin: async (orderId: string): Promise<OrderResponse> => {
+    const order = await orderRepository.findOrderById(orderId);
+
+    if (!order) {
+      throw new AppError({
+        message: 'Order not found',
+        statusCode: 404,
+        code: ErrorCodes.NOT_FOUND,
+      });
+    }
+
+    return toOrderResponse(order);
+  },
+
+  updateOrderStatusForAdmin: async ({
+    orderId,
+    input,
+  }: {
+    orderId: string;
+    input: UpdateOrderStatusInput;
+  }): Promise<OrderResponse> => {
+    const order = await orderRepository.findOrderById(orderId);
+
+    if (!order) {
+      throw new AppError({
+        message: 'Order not found',
+        statusCode: 404,
+        code: ErrorCodes.NOT_FOUND,
+      });
+    }
+
+    validateAdminStatusTransition({
+      currentStatus: order.status,
+      nextStatus: input.status,
+    });
+
+    const paymentStatus = getPaymentStatusForOrderStatus({
+      currentPaymentStatus: order.paymentStatus,
+      nextOrderStatus: input.status,
+    });
+
+    const updatedOrder = await orderRepository.updateOrderStatus({
+      orderId,
+      status: input.status,
+      paymentStatus,
+    });
+
+    return toOrderResponse(updatedOrder);
   },
 };
