@@ -12,6 +12,7 @@ export const ErrorCodes = {
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
   VENDOR_NOT_APPROVED: 'VENDOR_NOT_APPROVED',
   NOT_FOUND: 'NOT_FOUND',
+  PAYMENT_ALREADY_PROCESSED: 'PAYMENT_ALREADY_PROCESSED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

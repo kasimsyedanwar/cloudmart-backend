@@ -232,3 +232,15 @@ CloudMart now supports transaction-safe checkout.
 ```txt
 POST /api/v1/orders/checkout
 ```
+
+## Phase 16: Payment Mock Flow
+
+CloudMart now supports mock payment success and failure flows.
+
+### Payment Endpoints
+
+```txt
+GET  /api/v1/payments/:id
+POST /api/v1/payments/:id/mock-success
+POST /api/v1/payments/:id/mock-failure
+```
