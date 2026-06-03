@@ -10,6 +10,7 @@ import vendorRoutes from '../modules/vendors/vendor.routes';
 import paymentRoutes from '../modules/payments/payment.routes';
 import categoryRoutes from '../modules/categories/category.routes';
 import productRoutes from '../modules/products/product.routes';
+import reviewRoutes from '../modules/reviews/review.routes';
 import inventoryRoutes from '../modules/inventory/inventory.routes';
 
 const router = Router();
@@ -38,5 +39,6 @@ router.use('/api/v1', inventoryRoutes);
 router.use('/api/v1', cartRoutes);
 router.use('/api/v1', orderRoutes);
 router.use('/api/v1', paymentRoutes);
+router.use('/api/v1', reviewRoutes);
 
 export default router;

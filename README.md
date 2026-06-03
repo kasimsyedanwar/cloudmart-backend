@@ -255,3 +255,13 @@ CloudMart now supports role-based order views and admin order status management.
 GET /api/v1/orders/my
 GET /api/v1/orders/my/:id
 ```
+
+## Phase 18: Reviews
+
+CloudMart now supports purchased-product reviews with moderation.
+
+### Public Review Endpoints
+
+```txt
+GET /api/v1/products/:id/reviews
+```
