@@ -265,3 +265,14 @@ CloudMart now supports purchased-product reviews with moderation.
 ```txt
 GET /api/v1/products/:id/reviews
 ```
+
+## Phase 19: Dashboards
+
+CloudMart now supports admin and vendor dashboard metrics from database data.
+
+### Admin Dashboard Endpoints
+
+```txt
+GET  /api/v1/admin/dashboard
+POST /api/v1/admin/dashboard/snapshot
+```

@@ -5,6 +5,7 @@ import healthRoutes from '../modules/health/health.routes';
 import rbacRoutes from '../modules/rbac/rbac.routes';
 import cartRoutes from '../modules/cart/cart.routes';
 import userRoutes from '../modules/users/user.routes';
+import dashboardRoutes from '../modules/dashboards/dashboard.routes';
 import orderRoutes from '../modules/orders/order.routes';
 import vendorRoutes from '../modules/vendors/vendor.routes';
 import paymentRoutes from '../modules/payments/payment.routes';
@@ -40,5 +41,6 @@ router.use('/api/v1', cartRoutes);
 router.use('/api/v1', orderRoutes);
 router.use('/api/v1', paymentRoutes);
 router.use('/api/v1', reviewRoutes);
+router.use('/api/v1', dashboardRoutes);
 
 export default router;
