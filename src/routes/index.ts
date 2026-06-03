@@ -5,6 +5,7 @@ import healthRoutes from '../modules/health/health.routes';
 import rbacRoutes from '../modules/rbac/rbac.routes';
 import userRoutes from '../modules/users/user.routes';
 import vendorRoutes from '../modules/vendors/vendor.routes';
+import categoryRoutes from '../modules/categories/category.routes';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/rbac', rbacRoutes);
 router.use('/api/v1', vendorRoutes);
 router.use('/api/v1', userRoutes);
+router.use('/api/v1', categoryRoutes);
 
 export default router;

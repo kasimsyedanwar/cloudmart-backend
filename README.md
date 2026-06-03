@@ -174,3 +174,14 @@ CloudMart now supports user profile APIs, address management, and admin user sta
 GET   /api/v1/users/me
 PATCH /api/v1/users/me
 ```
+
+## Phase 11: Categories
+
+CloudMart now supports public category listing and admin category management.
+
+### Public Category Endpoints
+
+```txt
+GET /api/v1/categories
+GET /api/v1/categories/:id
+```
