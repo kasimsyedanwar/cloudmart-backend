@@ -3,6 +3,7 @@ import { successResponse } from '../common/utils/api-response';
 import authRoutes from '../modules/auth/auth.routes';
 import healthRoutes from '../modules/health/health.routes';
 import rbacRoutes from '../modules/rbac/rbac.routes';
+import cartRoutes from '../modules/cart/cart.routes';
 import userRoutes from '../modules/users/user.routes';
 import vendorRoutes from '../modules/vendors/vendor.routes';
 import categoryRoutes from '../modules/categories/category.routes';
@@ -32,5 +33,6 @@ router.use('/api/v1', userRoutes);
 router.use('/api/v1', categoryRoutes);
 router.use('/api/v1', productRoutes);
 router.use('/api/v1', inventoryRoutes);
+router.use('/api/v1', cartRoutes);
 
 export default router;

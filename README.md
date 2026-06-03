@@ -208,3 +208,17 @@ POST /api/v1/vendor/inventory/adjust
 GET  /api/v1/vendor/inventory/movements
 GET  /api/v1/vendor/inventory/low-stock
 ```
+
+## Phase 14: Cart
+
+CloudMart now supports active customer cart management.
+
+### Cart Endpoints
+
+```txt
+GET    /api/v1/cart
+POST   /api/v1/cart/items
+PATCH  /api/v1/cart/items/:itemId
+DELETE /api/v1/cart/items/:itemId
+DELETE /api/v1/cart/clear
+```
