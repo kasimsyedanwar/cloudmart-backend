@@ -12,6 +12,11 @@ const passwordSchema = z
     'Password must contain at least one special character',
   );
 
+const emailSchema = z
+  .email('Please provide a valid email address')
+  .trim()
+  .toLowerCase();
+
 export const registerBodySchema = z.object({
   name: z
     .string()
@@ -19,24 +24,26 @@ export const registerBodySchema = z.object({
     .min(2, 'Name must be at least 2 characters')
     .max(120, 'Name must be at most 120 characters'),
 
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .email('Please provide a valid email address'),
+  email: emailSchema,
 
   password: passwordSchema,
 });
 
 export const loginBodySchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .email('Please provide a valid email address'),
+  email: emailSchema,
 
   password: z.string().min(1, 'Password is required'),
 });
 
+export const refreshTokenBodySchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
+
+export const logoutBodySchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
+
 export type RegisterInput = z.infer<typeof registerBodySchema>;
 export type LoginInput = z.infer<typeof loginBodySchema>;
+export type RefreshTokenInput = z.infer<typeof refreshTokenBodySchema>;
+export type LogoutInput = z.infer<typeof logoutBodySchema>;

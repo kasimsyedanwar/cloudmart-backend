@@ -1,9 +1,21 @@
 import { User, UserStatus } from '@prisma/client';
+
+import prisma from '../../config/prisma';
 import { AppError } from '../../common/errors/app-error';
 import { ErrorCodes } from '../../common/errors/error-codes';
+import {
+  generateRefreshToken,
+  getRefreshTokenExpiry,
+  hashRefreshToken,
+  signAccessToken,
+} from '../../common/utils/jwt';
 import { comparePassword, hashPassword } from '../../common/utils/password';
-import { signAccessToken } from '../../common/utils/jwt';
-import { LoginInput, RegisterInput } from './auth.validation';
+import {
+  LoginInput,
+  LogoutInput,
+  RefreshTokenInput,
+  RegisterInput,
+} from './auth.validation';
 import { authRepository } from './auth.repository';
 
 type SafeAuthUser = {
@@ -18,7 +30,12 @@ type SafeAuthUser = {
 type AuthResult = {
   user: SafeAuthUser;
   accessToken: string;
+  refreshToken: string;
   tokenType: 'Bearer';
+};
+
+type MeResult = {
+  user: SafeAuthUser;
 };
 
 const toSafeAuthUser = (user: User): SafeAuthUser => {
@@ -32,18 +49,52 @@ const toSafeAuthUser = (user: User): SafeAuthUser => {
   };
 };
 
-const buildAuthResult = (user: User): AuthResult => {
+const createTokenPair = async (
+  user: User,
+): Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> => {
   const accessToken = signAccessToken({
     userId: user.id,
     email: user.email,
     role: user.role,
   });
 
+  const refreshToken = generateRefreshToken();
+  const refreshTokenHash = hashRefreshToken(refreshToken);
+
+  await authRepository.createRefreshToken({
+    userId: user.id,
+    tokenHash: refreshTokenHash,
+    expiresAt: getRefreshTokenExpiry(),
+  });
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
+const buildAuthResult = async (user: User): Promise<AuthResult> => {
+  const tokens = await createTokenPair(user);
+
   return {
     user: toSafeAuthUser(user),
-    accessToken,
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
     tokenType: 'Bearer',
   };
+};
+
+const assertActiveUser = (user: User): void => {
+  if (user.status !== UserStatus.ACTIVE) {
+    throw new AppError({
+      message: 'User account is not active',
+      statusCode: 403,
+      code: ErrorCodes.ACCOUNT_INACTIVE,
+    });
+  }
 };
 
 export const authService = {
@@ -80,13 +131,7 @@ export const authService = {
       });
     }
 
-    if (user.status !== UserStatus.ACTIVE) {
-      throw new AppError({
-        message: 'User account is not active',
-        statusCode: 403,
-        code: ErrorCodes.ACCOUNT_INACTIVE,
-      });
-    }
+    assertActiveUser(user);
 
     const isPasswordValid = await comparePassword({
       plainPassword: input.password,
@@ -102,5 +147,91 @@ export const authService = {
     }
 
     return buildAuthResult(user);
+  },
+
+  refreshToken: async (input: RefreshTokenInput): Promise<AuthResult> => {
+    const incomingTokenHash = hashRefreshToken(input.refreshToken);
+
+    const storedRefreshToken =
+      await authRepository.findRefreshTokenByHash(incomingTokenHash);
+
+    if (!storedRefreshToken) {
+      throw new AppError({
+        message: 'Invalid refresh token',
+        statusCode: 401,
+        code: ErrorCodes.INVALID_TOKEN,
+      });
+    }
+
+    if (storedRefreshToken.revokedAt) {
+      throw new AppError({
+        message: 'Refresh token has been revoked',
+        statusCode: 401,
+        code: ErrorCodes.INVALID_TOKEN,
+      });
+    }
+
+    if (storedRefreshToken.expiresAt.getTime() < Date.now()) {
+      throw new AppError({
+        message: 'Refresh token expired',
+        statusCode: 401,
+        code: ErrorCodes.TOKEN_EXPIRED,
+      });
+    }
+
+    assertActiveUser(storedRefreshToken.user);
+
+    const newRefreshToken = generateRefreshToken();
+    const newRefreshTokenHash = hashRefreshToken(newRefreshToken);
+
+    await prisma.$transaction(async (tx) => {
+      await authRepository.revokeRefreshToken(incomingTokenHash, tx);
+
+      await authRepository.createRefreshToken(
+        {
+          userId: storedRefreshToken.userId,
+          tokenHash: newRefreshTokenHash,
+          expiresAt: getRefreshTokenExpiry(),
+        },
+        tx,
+      );
+    });
+
+    const accessToken = signAccessToken({
+      userId: storedRefreshToken.user.id,
+      email: storedRefreshToken.user.email,
+      role: storedRefreshToken.user.role,
+    });
+
+    return {
+      user: toSafeAuthUser(storedRefreshToken.user),
+      accessToken,
+      refreshToken: newRefreshToken,
+      tokenType: 'Bearer',
+    };
+  },
+
+  logout: async (input: LogoutInput): Promise<void> => {
+    const tokenHash = hashRefreshToken(input.refreshToken);
+
+    await authRepository.revokeRefreshToken(tokenHash);
+  },
+
+  getMe: async (userId: string): Promise<MeResult> => {
+    const user = await authRepository.findUserById(userId);
+
+    if (!user) {
+      throw new AppError({
+        message: 'Authenticated user no longer exists',
+        statusCode: 401,
+        code: ErrorCodes.INVALID_TOKEN,
+      });
+    }
+
+    assertActiveUser(user);
+
+    return {
+      user: toSafeAuthUser(user),
+    };
   },
 };

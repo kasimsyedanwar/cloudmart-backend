@@ -32,6 +32,7 @@ const envSchema = z.object({
     .string()
     .min(32, 'JWT_ACCESS_SECRET must be atleast 32 Characters'),
   JWT_ACCESS_EXPIRES_IN: z.string().min(1, 'JWT_ACCESS_EXPIRES_IN is required'),
+  JWT_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(7),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

@@ -126,3 +126,15 @@ CloudMart now supports customer registration and login.
 POST /api/v1/auth/register
 POST /api/v1/auth/login
 ```
+
+## Phase 7: Refresh / Logout / Me
+
+CloudMart now supports refresh-token rotation, logout revocation, and protected user profile retrieval.
+
+### Endpoints
+
+```txt
+POST /api/v1/auth/refresh-token
+POST /api/v1/auth/logout
+GET  /api/v1/auth/me
+```
