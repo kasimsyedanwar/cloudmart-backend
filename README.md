@@ -163,3 +163,14 @@ POST  /api/v1/vendors/register
 GET   /api/v1/vendors/me
 PATCH /api/v1/vendors/me
 ```
+
+## Phase 10: Users + Addresses
+
+CloudMart now supports user profile APIs, address management, and admin user status management.
+
+### User Profile Endpoints
+
+```txt
+GET   /api/v1/users/me
+PATCH /api/v1/users/me
+```
