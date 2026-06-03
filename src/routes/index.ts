@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { successResponse } from '../common/utils/api-response';
 import authRoutes from '../modules/auth/auth.routes';
 import healthRoutes from '../modules/health/health.routes';
+import rbacRoutes from '../modules/rbac/rbac.routes';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.get('/api/v1', (req, res) => {
 });
 
 router.use('/api/v1/auth', authRoutes);
+router.use('/api/v1/rbac', rbacRoutes);
 
 export default router;

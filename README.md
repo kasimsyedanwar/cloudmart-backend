@@ -138,3 +138,16 @@ POST /api/v1/auth/refresh-token
 POST /api/v1/auth/logout
 GET  /api/v1/auth/me
 ```
+
+## Phase 8: RBAC + Route Guards
+
+CloudMart now includes reusable role-based access control middleware.
+
+### RBAC Test Routes
+
+```txt
+GET /api/v1/rbac/authenticated
+GET /api/v1/rbac/admin-only
+GET /api/v1/rbac/vendor-only
+GET /api/v1/rbac/customer-only
+```
