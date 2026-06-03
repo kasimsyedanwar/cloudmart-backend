@@ -196,3 +196,15 @@ CloudMart now supports public product browsing, vendor product management, and a
 GET /api/v1/products
 GET /api/v1/products/:id
 ```
+
+## Phase 13: Inventory
+
+CloudMart now supports audited inventory stock adjustments and vendor low-stock dashboard.
+
+### Vendor Inventory Endpoints
+
+```txt
+POST /api/v1/vendor/inventory/adjust
+GET  /api/v1/vendor/inventory/movements
+GET  /api/v1/vendor/inventory/low-stock
+```

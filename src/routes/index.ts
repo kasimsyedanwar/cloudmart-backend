@@ -7,6 +7,7 @@ import userRoutes from '../modules/users/user.routes';
 import vendorRoutes from '../modules/vendors/vendor.routes';
 import categoryRoutes from '../modules/categories/category.routes';
 import productRoutes from '../modules/products/product.routes';
+import inventoryRoutes from '../modules/inventory/inventory.routes';
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/api/v1', vendorRoutes);
 router.use('/api/v1', userRoutes);
 router.use('/api/v1', categoryRoutes);
 router.use('/api/v1', productRoutes);
+router.use('/api/v1', inventoryRoutes);
 
 export default router;
