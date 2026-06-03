@@ -1,6 +1,6 @@
 import { Router } from 'express';
-
 import { successResponse } from '../common/utils/api-response';
+import authRoutes from '../modules/auth/auth.routes';
 import healthRoutes from '../modules/health/health.routes';
 
 const router = Router();
@@ -18,5 +18,7 @@ router.get('/api/v1', (req, res) => {
     }),
   );
 });
+
+router.use('/api/v1/auth', authRoutes);
 
 export default router;

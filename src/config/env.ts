@@ -28,6 +28,10 @@ const envSchema = z.object({
       message:
         'REDIS_URL must be valid Redis connection string starting with redis://',
     }),
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(32, 'JWT_ACCESS_SECRET must be atleast 32 Characters'),
+  JWT_ACCESS_EXPIRES_IN: z.string().min(1, 'JWT_ACCESS_EXPIRES_IN is required'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

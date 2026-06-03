@@ -115,3 +115,14 @@ Admin    -> admin@cloudmart.com / Password@123
 Vendor   -> vendor@cloudmart.com / Password@123
 Customer -> customer@cloudmart.com / Password@123
 ```
+
+## Phase 6: Auth Register/Login
+
+CloudMart now supports customer registration and login.
+
+### Endpoints
+
+```txt
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+```
