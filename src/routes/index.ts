@@ -5,6 +5,7 @@ import healthRoutes from '../modules/health/health.routes';
 import rbacRoutes from '../modules/rbac/rbac.routes';
 import cartRoutes from '../modules/cart/cart.routes';
 import userRoutes from '../modules/users/user.routes';
+import orderRoutes from '../modules/orders/order.routes';
 import vendorRoutes from '../modules/vendors/vendor.routes';
 import categoryRoutes from '../modules/categories/category.routes';
 import productRoutes from '../modules/products/product.routes';
@@ -34,5 +35,6 @@ router.use('/api/v1', categoryRoutes);
 router.use('/api/v1', productRoutes);
 router.use('/api/v1', inventoryRoutes);
 router.use('/api/v1', cartRoutes);
+router.use('/api/v1', orderRoutes);
 
 export default router;

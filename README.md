@@ -222,3 +222,13 @@ PATCH  /api/v1/cart/items/:itemId
 DELETE /api/v1/cart/items/:itemId
 DELETE /api/v1/cart/clear
 ```
+
+## Phase 15: Checkout Transaction
+
+CloudMart now supports transaction-safe checkout.
+
+### Checkout Endpoint
+
+```txt
+POST /api/v1/orders/checkout
+```
