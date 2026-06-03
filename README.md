@@ -185,3 +185,14 @@ CloudMart now supports public category listing and admin category management.
 GET /api/v1/categories
 GET /api/v1/categories/:id
 ```
+
+## Phase 12: Product Catalog
+
+CloudMart now supports public product browsing, vendor product management, and admin product moderation.
+
+### Public Product Endpoints
+
+```txt
+GET /api/v1/products
+GET /api/v1/products/:id
+```

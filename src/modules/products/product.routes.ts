@@ -1,0 +1,111 @@
+import { UserRole } from '@prisma/client';
+import { Router } from 'express';
+import { authenticate } from '../../common/middlewares/authenticate';
+import { asyncHandler } from '../../common/middlewares/async-handler';
+import { requireApprovedVendor } from '../../common/middlewares/require-approved-vendor';
+import { requireRole } from '../../common/middlewares/require-role';
+import { validateRequest } from '../../common/middlewares/validate-request';
+import {
+  archiveVendorProduct,
+  createVendorProduct,
+  getPublicProductById,
+  listProductsForAdmin,
+  listPublicProducts,
+  listVendorProducts,
+  updateProductStatusForAdmin,
+  updateVendorProduct,
+} from './product.controller';
+import {
+  createProductBodySchema,
+  listAdminProductsQuerySchema,
+  listPublicProductsQuerySchema,
+  listVendorProductsQuerySchema,
+  productIdParamsSchema,
+  updateProductBodySchema,
+  updateProductStatusBodySchema,
+} from './product.validation';
+
+const router = Router();
+
+router.get(
+  '/products',
+  validateRequest({
+    query: listPublicProductsQuerySchema,
+  }),
+  asyncHandler(listPublicProducts),
+);
+
+router.get(
+  '/products/:id',
+  validateRequest({
+    params: productIdParamsSchema,
+  }),
+  asyncHandler(getPublicProductById),
+);
+
+router.post(
+  '/vendor/products',
+  authenticate,
+  requireRole(UserRole.VENDOR),
+  requireApprovedVendor,
+  validateRequest({
+    body: createProductBodySchema,
+  }),
+  asyncHandler(createVendorProduct),
+);
+
+router.get(
+  '/vendor/products',
+  authenticate,
+  requireRole(UserRole.VENDOR),
+  validateRequest({
+    query: listVendorProductsQuerySchema,
+  }),
+  asyncHandler(listVendorProducts),
+);
+
+router.patch(
+  '/vendor/products/:id',
+  authenticate,
+  requireRole(UserRole.VENDOR),
+  requireApprovedVendor,
+  validateRequest({
+    params: productIdParamsSchema,
+    body: updateProductBodySchema,
+  }),
+  asyncHandler(updateVendorProduct),
+);
+
+router.delete(
+  '/vendor/products/:id',
+  authenticate,
+  requireRole(UserRole.VENDOR),
+  requireApprovedVendor,
+  validateRequest({
+    params: productIdParamsSchema,
+  }),
+  asyncHandler(archiveVendorProduct),
+);
+
+router.get(
+  '/admin/products',
+  authenticate,
+  requireRole(UserRole.ADMIN),
+  validateRequest({
+    query: listAdminProductsQuerySchema,
+  }),
+  asyncHandler(listProductsForAdmin),
+);
+
+router.patch(
+  '/admin/products/:id/status',
+  authenticate,
+  requireRole(UserRole.ADMIN),
+  validateRequest({
+    params: productIdParamsSchema,
+    body: updateProductStatusBodySchema,
+  }),
+  asyncHandler(updateProductStatusForAdmin),
+);
+
+export default router;

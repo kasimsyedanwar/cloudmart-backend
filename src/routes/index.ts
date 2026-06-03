@@ -6,6 +6,7 @@ import rbacRoutes from '../modules/rbac/rbac.routes';
 import userRoutes from '../modules/users/user.routes';
 import vendorRoutes from '../modules/vendors/vendor.routes';
 import categoryRoutes from '../modules/categories/category.routes';
+import productRoutes from '../modules/products/product.routes';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/api/v1/rbac', rbacRoutes);
 router.use('/api/v1', vendorRoutes);
 router.use('/api/v1', userRoutes);
 router.use('/api/v1', categoryRoutes);
+router.use('/api/v1', productRoutes);
 
 export default router;
