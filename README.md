@@ -151,3 +151,15 @@ GET /api/v1/rbac/admin-only
 GET /api/v1/rbac/vendor-only
 GET /api/v1/rbac/customer-only
 ```
+
+## Phase 9: Vendor Onboarding
+
+CloudMart now supports vendor onboarding and admin approval.
+
+### Vendor Endpoints
+
+```txt
+POST  /api/v1/vendors/register
+GET   /api/v1/vendors/me
+PATCH /api/v1/vendors/me
+```

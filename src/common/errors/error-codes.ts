@@ -10,6 +10,8 @@ export const ErrorCodes = {
   ACCOUNT_INACTIVE: 'ACCOUNT_INACTIVE',
   INVALID_TOKEN: 'INVALID_TOKEN',
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
+  VENDOR_NOT_APPROVED: 'VENDOR_NOT_APPROVED',
+  NOT_FOUND: 'NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
