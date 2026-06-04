@@ -276,3 +276,16 @@ CloudMart now supports admin and vendor dashboard metrics from database data.
 GET  /api/v1/admin/dashboard
 POST /api/v1/admin/dashboard/snapshot
 ```
+
+## Phase 20: Redis Caching
+
+CloudMart now supports Redis caching for read-heavy public product and category APIs.
+
+### Cached Endpoints
+
+```txt
+GET /api/v1/products
+GET /api/v1/products/:id
+GET /api/v1/categories
+GET /api/v1/categories/:id
+```

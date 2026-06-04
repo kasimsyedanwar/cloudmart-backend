@@ -1,7 +1,10 @@
 import { UserRole } from '@prisma/client';
 import { Router } from 'express';
+import { CacheKeys } from '../../common/cache/cache-keys';
 import { authenticate } from '../../common/middlewares/authenticate';
 import { asyncHandler } from '../../common/middlewares/async-handler';
+import { cacheResponse } from '../../common/middlewares/cache-response';
+import { invalidateCache } from '../../common/middlewares/invalidate-cache';
 import { requireApprovedVendor } from '../../common/middlewares/require-approved-vendor';
 import { requireRole } from '../../common/middlewares/require-role';
 import { validateRequest } from '../../common/middlewares/validate-request';
@@ -27,8 +30,19 @@ import {
 
 const router = Router();
 
+const invalidateProductCache = invalidateCache({
+  patterns: [
+    CacheKeys.patterns.allProductLists,
+    CacheKeys.patterns.allProductDetails,
+  ],
+});
+
 router.get(
   '/products',
+  cacheResponse({
+    ttlSeconds: 60,
+    keyBuilder: CacheKeys.productList,
+  }),
   validateRequest({
     query: listPublicProductsQuerySchema,
   }),
@@ -37,6 +51,10 @@ router.get(
 
 router.get(
   '/products/:id',
+  cacheResponse({
+    ttlSeconds: 60,
+    keyBuilder: (req) => CacheKeys.productDetail(String(req.params.id)),
+  }),
   validateRequest({
     params: productIdParamsSchema,
   }),
@@ -51,6 +69,7 @@ router.post(
   validateRequest({
     body: createProductBodySchema,
   }),
+  invalidateProductCache,
   asyncHandler(createVendorProduct),
 );
 
@@ -73,6 +92,7 @@ router.patch(
     params: productIdParamsSchema,
     body: updateProductBodySchema,
   }),
+  invalidateProductCache,
   asyncHandler(updateVendorProduct),
 );
 
@@ -84,6 +104,7 @@ router.delete(
   validateRequest({
     params: productIdParamsSchema,
   }),
+  invalidateProductCache,
   asyncHandler(archiveVendorProduct),
 );
 
@@ -105,6 +126,7 @@ router.patch(
     params: productIdParamsSchema,
     body: updateProductStatusBodySchema,
   }),
+  invalidateProductCache,
   asyncHandler(updateProductStatusForAdmin),
 );
 

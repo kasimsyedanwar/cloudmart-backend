@@ -1,7 +1,9 @@
 import { UserRole } from '@prisma/client';
 import { Router } from 'express';
+import { CacheKeys } from '../../common/cache/cache-keys';
 import { authenticate } from '../../common/middlewares/authenticate';
 import { asyncHandler } from '../../common/middlewares/async-handler';
+import { invalidateCache } from '../../common/middlewares/invalidate-cache';
 import { requireRole } from '../../common/middlewares/require-role';
 import { validateRequest } from '../../common/middlewares/validate-request';
 import {
@@ -16,6 +18,13 @@ import {
 } from './payment.validation';
 
 const router = Router();
+
+const invalidateProductCache = invalidateCache({
+  patterns: [
+    CacheKeys.patterns.allProductLists,
+    CacheKeys.patterns.allProductDetails,
+  ],
+});
 
 router.get(
   '/payments/:id',
@@ -46,6 +55,7 @@ router.post(
     params: paymentIdParamsSchema,
     body: mockPaymentFailureBodySchema,
   }),
+  invalidateProductCache,
   asyncHandler(markMockPaymentFailure),
 );
 

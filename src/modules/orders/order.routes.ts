@@ -1,7 +1,9 @@
 import { UserRole } from '@prisma/client';
 import { Router } from 'express';
+import { CacheKeys } from '../../common/cache/cache-keys';
 import { authenticate } from '../../common/middlewares/authenticate';
 import { asyncHandler } from '../../common/middlewares/async-handler';
+import { invalidateCache } from '../../common/middlewares/invalidate-cache';
 import { requireRole } from '../../common/middlewares/require-role';
 import { validateRequest } from '../../common/middlewares/validate-request';
 import {
@@ -25,6 +27,13 @@ import {
 
 const router = Router();
 
+const invalidateProductCache = invalidateCache({
+  patterns: [
+    CacheKeys.patterns.allProductLists,
+    CacheKeys.patterns.allProductDetails,
+  ],
+});
+
 router.post(
   '/orders/checkout',
   authenticate,
@@ -32,6 +41,7 @@ router.post(
   validateRequest({
     body: checkoutBodySchema,
   }),
+  invalidateProductCache,
   asyncHandler(checkout),
 );
 
